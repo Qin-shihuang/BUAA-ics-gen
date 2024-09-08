@@ -9,3 +9,5 @@ python3 ics_gen.py <json> <first_day_of_semester in yyyy-mm-dd>
 # for example
 python3 ics_gen.py arrangedList.json 2024-09-02
 ```
+## Reference 
+[BUAAIcsGen](https://github.com/roife/BUAAIcsGen)

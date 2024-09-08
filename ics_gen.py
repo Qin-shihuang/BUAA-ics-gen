@@ -1,8 +1,44 @@
 import datetime
-import sys
 import re
 import json
+from bs4 import BeautifulSoup
+import requests
+from getpass import getpass
+from urllib.parse import quote
 
+session = requests.Session()
+
+login_url = "https://sso.buaa.edu.cn/login?service="
+jwxt_url = "https://byxt.buaa.edu.cn"
+api_url = "https://byxt.buaa.edu.cn/jwapp/sys/homeapp/api/home/student/getMyScheduleDetail.do?"
+
+def get_token(session: requests.Session, target: str) -> str:
+    response = session.get(target)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    token = soup.find('input', {'name': 'execution'})['value']
+    return token
+
+
+def login(session: requests.Session, target_url: str, username: str, password: str) -> bool:
+    target = login_url + quote(target_url, 'utf-8')
+    form = {
+        'username': username,
+        'password': password,
+        'execution': get_token(session, target),
+        '_eventId': 'submit',
+        'type': 'username_password',
+        'submit': "LOGIN"
+    }
+    response = session.post(target, data=form, allow_redirects=True)
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    if soup.script.string is not None:
+        target_url = jwxt_url + soup.script.string.split('\'')[1]
+        response = session.get(target_url)
+        return True
+    return False
+    
+    
 def extract_week_and_teacher_info(text):
     week_ranges = re.findall(r'(\d+-\d+周|\d+周)', text)
     
@@ -60,11 +96,28 @@ END:VEVENT"""
     return ics_payload
 
 if __name__ == "__main__":
-    input = sys.argv[1]
-    week_one_monday = sys.argv[2]
-    with open(input, "r", encoding="utf-8") as f:
-        data = f.read()
-    classes = json.loads(data)
+    username = input('Enter username: ')
+    password = getpass('Enter password: ')
+    if not login(session, 'https://byxt.buaa.edu.cn/jwapp/sys/homeapp/index.do', username, password):
+        print('Login failed')
+        exit(1)
+    print('Login success')
+    print('Please enter term id (e.g. 2023-2024-1)')
+    print('Autumn: 1, Spring: 2, Summer: 3')
+    term_id = input('Enter term id: ')
+    response = session.get(api_url + f'termCode={term_id}&type=term')
+    if response.status_code != 200:
+        print('Failed to get schedule')
+        exit(1)
+    data = json.loads(response.text)
+    if not data.get('datas'):
+        print('Failed to get schedule')
+        exit(1)
+        
+    print('Please enter the date of the first Monday of the semester (e.g. 2024-09-02)')
+    week_one_monday = input('Enter date: ')
+    classes = data['datas']['arrangedList']
+
     class_list = []
     for klass in classes:
         class_info = {}
@@ -87,7 +140,4 @@ if __name__ == "__main__":
     with open('calendar.ics', 'w', encoding='utf-8') as f:
         f.write(ics_payload)
         
-        
-        
-        
-        
+    print('Calendar saved as calendar.ics')

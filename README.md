@@ -1,13 +1,13 @@
 # BUAA-ICS-GEN
 
-Get the .json file yourself, then run the script to generate the calendar file.
+Export course schedule from Jiaowu system to ics file.
 
-![](req.png)
-
+## Usage
 ```shell
-python3 ics_gen.py <json> <first_day_of_semester in yyyy-mm-dd> 
-# for example
-python3 ics_gen.py arrangedList.json 2024-09-02
+python3 ics_gen.py
 ```
+Then just follow the instructions on the screen.
+![](instruction.png)
+
 ## Reference 
 [BUAAIcsGen](https://github.com/roife/BUAAIcsGen)

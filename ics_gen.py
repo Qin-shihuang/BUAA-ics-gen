@@ -85,7 +85,7 @@ DTEND;TZID=Asia/Shanghai:{event_end}
 LOCATION:{class_info["location"]}
 SUMMARY:{class_info["course_name"]}
 BEGIN:VALARM
-TRIGGER:-PT30M
+TRIGGER:-P0DT0H30M0S
 REPEAT:1
 DURATION:PT1M
 END:VALARM
